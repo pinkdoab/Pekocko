@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/user");
 
+// Création d'un utilisateur
+// req.body => {"email":"util1@doab.fr","password":"cheval"}
 exports.signup = (req, res, next) => {
   bcrypt
     .hash(req.body.password, 10)
@@ -19,6 +21,8 @@ exports.signup = (req, res, next) => {
     .catch(error => res.status(500).json({ error }));
 };
 
+// Activation d'un utilisateur
+// req.body => {"email":"util1@doab.fr","password":"cheval"}
 exports.login = (req, res, next) => {
   User.findOne({ email: req.body.email })
     .then(user => {
