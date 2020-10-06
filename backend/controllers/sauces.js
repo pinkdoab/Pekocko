@@ -100,64 +100,58 @@ exports.modifySauce = (req, res, next) => {
 exports.likeSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
-      // if like = 1, adding userId to usersLiked and update likes
+      // Si like = 1, ajoute userId à usersLiked et likes est égale au nb d'éléments dans usersLiked
       if (req.body.like === 1) {
         sauce.usersLiked.push(req.body.userId)
-        Sauce.updateOne(
-          { _id: req.params.id },
-          { likes: sauce.usersLiked.length, usersLiked: sauce.usersLiked }
+        Sauce.updateOne({ _id: req.params.id },
+          { 
+            likes: sauce.usersLiked.length,
+            usersLiked: sauce.usersLiked
+          }
         )
+        .then(res.status(200).json({ message: 'Vous aimez la sauce' }))
+        .catch(error => res.status(500).json({ error }))
 
-          .then(res.status(200).json({ message: 'You liked the sauce' }))
-          .catch(error => res.status(500).json({ error }))
-
-        // if like = -1, adding userId to usersDisliked and update dislikes
+        // Si like = -1, ajoute userId à usersDisliked et dislikes est égale au nb d'éléments dans usersLiked
       } else if (req.body.like === -1) {
         sauce.usersDisliked.push(req.body.userId)
-        Sauce.updateOne(
-          { _id: req.params.id },
+        Sauce.updateOne({ _id: req.params.id },
           {
             dislikes: sauce.usersDisliked.length,
             usersDisliked: sauce.usersDisliked
           }
         )
-          .then(res.status(200).json({ message: 'You did not like the sauce' }))
-          .catch(error => res.status(500).json({ error }))
+        .then(res.status(200).json({ message: 'Vous n\'aimez pas la sauce' }))
+        .catch(error => res.status(500).json({ error }))
 
-        // if like = 0, removing userId from usersLike and usersDisliked and update dislikes
+        // Si like = 0, supprimer userId de usersLike ou usersDisliked puis update dislikes
       } else if (req.body.like === 0) {
+
         if (sauce.usersLiked.includes(req.body.userId)) {
           const indexUserId = sauce.usersLiked.indexOf(req.body.userId)
-
           sauce.usersLiked.splice(indexUserId, 1)
-          Sauce.updateOne(
-            { _id: req.params.id },
+          Sauce.updateOne({ _id: req.params.id },
             {
               usersLiked: sauce.usersLiked,
               likes: sauce.usersLiked.length
             }
           )
+          .then(res.status(200).json({ message: 'You did not give any feedback' }))
+          .catch(error => res.status(500).json({ error }))
 
-            .then(
-              res.status(200).json({ message: 'You did not give any feedback' })
-            )
-            .catch(error => res.status(500).json({ error }))
         } else if (sauce.usersDisliked.includes(req.body.userId)) {
           const indexUserId = sauce.usersDisliked.indexOf(req.body.userId)
           sauce.usersDisliked.splice(indexUserId, 1)
-          Sauce.updateOne(
-            { _id: req.params.id },
+          Sauce.updateOne({ _id: req.params.id },
             {
               usersDisliked: sauce.usersDisliked,
               dislikes: sauce.usersDisliked.length
             }
           )
-            .then(
-              res.status(200).json({ message: 'You did not give any feedback' })
-            )
-            .catch(error => res.status(500).json({ error }))
+          .then(res.status(200).json({ message: 'You did not give any feedback' }))
+          .catch(error => res.status(500).json({ error }))
         }
       }
     })
-    .catch(error => res.status(500).json({ error }))
+  .catch(error => res.status(500).json({ error }))
 }
