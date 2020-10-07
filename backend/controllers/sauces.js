@@ -105,7 +105,7 @@ exports.likeSauce = (req, res, next) => {
         if (!sauce.usersLiked.includes(req.body.userId)) {      // évite plusieurs avis positif du même user
           sauce.usersLiked.push(req.body.userId)
 
-          if (!sauce.usersDisliked.includes(req.body.userId)) {
+          if (!sauce.usersDisliked.includes(req.body.userId)) {     // peut passer directement de j'aime à j'aime pas
             Sauce.updateOne({ _id: req.params.id },
               { 
                 likes: sauce.usersLiked.length,
@@ -135,16 +135,32 @@ exports.likeSauce = (req, res, next) => {
       } else if (req.body.like === -1) {
         if (!sauce.usersDisliked.includes(req.body.userId)) {      // évite plusieurs avis négatifs du même user
           sauce.usersDisliked.push(req.body.userId)
-          Sauce.updateOne({ _id: req.params.id },
-            {
-              dislikes: sauce.usersDisliked.length,
-              usersDisliked: sauce.usersDisliked
-            }
-          )
-          .then(res.status(200).json({ message: 'Vous n\'aimez pas la sauce' }))
-          .catch(error => res.status(500).json({ error }))
-      } else {
-        throw 'pas plusieurs avis négatif du même user';
+
+          if (!sauce.usersLiked.includes(req.body.userId)) {    // peut passer directement de j'aime à j'aime pas
+            Sauce.updateOne({ _id: req.params.id },
+              {
+                dislikes: sauce.usersDisliked.length,
+                usersDisliked: sauce.usersDisliked
+              }
+            )
+            .then(res.status(200).json({ message: 'Vous n\'aimez pas la sauce' }))
+            .catch(error => res.status(500).json({ error }))
+          } else {
+            const indexUserId = sauce.usersLiked.indexOf(req.body.userId)
+            sauce.usersLiked.splice(indexUserId, 1)
+            Sauce.updateOne({ _id: req.params.id },
+              { 
+                likes: sauce.usersLiked.length,
+                usersLiked: sauce.usersLiked,
+                dislikes: sauce.usersDisliked.length,
+                usersDisliked: sauce.usersDisliked 
+              }
+            )
+            .then(res.status(200).json({ message: 'Vous changez d\'avis. Vous n\'aimez pas la sauce' }))
+            .catch(error => res.status(500).json({ error }))                
+          }
+        } else {
+          throw 'pas plusieurs avis négatif du même user';
       }
         // Si like = 0, supprimer userId de usersLike ou usersDisliked puis update dislikes
       } else if (req.body.like === 0) {
