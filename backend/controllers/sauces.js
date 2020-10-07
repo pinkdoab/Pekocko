@@ -102,28 +102,50 @@ exports.likeSauce = (req, res, next) => {
     .then(sauce => {
       // Si like = 1, ajoute userId à usersLiked et likes est égale au nb d'éléments dans usersLiked
       if (req.body.like === 1) {
-        sauce.usersLiked.push(req.body.userId)
-        Sauce.updateOne({ _id: req.params.id },
-          { 
-            likes: sauce.usersLiked.length,
-            usersLiked: sauce.usersLiked
-          }
-        )
-        .then(res.status(200).json({ message: 'Vous aimez la sauce' }))
-        .catch(error => res.status(500).json({ error }))
+        if (!sauce.usersLiked.includes(req.body.userId)) {      // évite plusieurs avis positif du même user
+          sauce.usersLiked.push(req.body.userId)
 
+          if (!sauce.usersDisliked.includes(req.body.userId)) {
+            Sauce.updateOne({ _id: req.params.id },
+              { 
+                likes: sauce.usersLiked.length,
+                usersLiked: sauce.usersLiked,
+              }
+            )
+            .then(res.status(200).json({ message: 'Vous aimez la sauce' }))
+            .catch(error => res.status(500).json({ error }))
+          } else {
+            const indexUserId = sauce.usersDisliked.indexOf(req.body.userId)
+            sauce.usersDisliked.splice(indexUserId, 1)
+            Sauce.updateOne({ _id: req.params.id },
+              { 
+                likes: sauce.usersLiked.length,
+                usersLiked: sauce.usersLiked,
+                dislikes: sauce.usersDisliked.length,
+                usersDisliked: sauce.usersDisliked 
+              }
+            )
+            .then(res.status(200).json({ message: 'Vous changez d\'avis. Vous aimez la sauce' }))
+            .catch(error => res.status(500).json({ error }))          
+          }
+        } else {
+          throw 'pas plusieurs avis positif du même user';
+        }
         // Si like = -1, ajoute userId à usersDisliked et dislikes est égale au nb d'éléments dans usersLiked
       } else if (req.body.like === -1) {
-        sauce.usersDisliked.push(req.body.userId)
-        Sauce.updateOne({ _id: req.params.id },
-          {
-            dislikes: sauce.usersDisliked.length,
-            usersDisliked: sauce.usersDisliked
-          }
-        )
-        .then(res.status(200).json({ message: 'Vous n\'aimez pas la sauce' }))
-        .catch(error => res.status(500).json({ error }))
-
+        if (!sauce.usersDisliked.includes(req.body.userId)) {      // évite plusieurs avis négatifs du même user
+          sauce.usersDisliked.push(req.body.userId)
+          Sauce.updateOne({ _id: req.params.id },
+            {
+              dislikes: sauce.usersDisliked.length,
+              usersDisliked: sauce.usersDisliked
+            }
+          )
+          .then(res.status(200).json({ message: 'Vous n\'aimez pas la sauce' }))
+          .catch(error => res.status(500).json({ error }))
+      } else {
+        throw 'pas plusieurs avis négatif du même user';
+      }
         // Si like = 0, supprimer userId de usersLike ou usersDisliked puis update dislikes
       } else if (req.body.like === 0) {
 
@@ -136,7 +158,7 @@ exports.likeSauce = (req, res, next) => {
               likes: sauce.usersLiked.length
             }
           )
-          .then(res.status(200).json({ message: 'You did not give any feedback' }))
+          .then(res.status(200).json({ message: 'Pas de commentaire' }))
           .catch(error => res.status(500).json({ error }))
 
         } else if (sauce.usersDisliked.includes(req.body.userId)) {
@@ -148,8 +170,10 @@ exports.likeSauce = (req, res, next) => {
               dislikes: sauce.usersDisliked.length
             }
           )
-          .then(res.status(200).json({ message: 'You did not give any feedback' }))
+          .then(res.status(200).json({ message: 'Pas de commentaire' }))
           .catch(error => res.status(500).json({ error }))
+        } else {
+          throw 'impossible commentaire déjà supprimé';
         }
       }
     })
