@@ -10,7 +10,7 @@ const userRoutes = require('./routes/user');
 const sauceRoutes = require('./routes/sauces');
 
 // Connection à mongodb base: bdPekocko  MdP: ampoule59
-mongoose.connect('mongodb+srv://pink1:ampoule59@cluster0.5jydf.gcp.mongodb.net/bdPekocko?retryWrites=true&w=majority',
+mongoose.connect('mongodb+srv://pink2:cheval2@cluster0.5jydf.gcp.mongodb.net/bdPekocko?retryWrites=true&w=majority',
     { useNewUrlParser: true,
       useUnifiedTopology: true })
 .then(() => console.log('Connexion à MongoDB réussie !'))
